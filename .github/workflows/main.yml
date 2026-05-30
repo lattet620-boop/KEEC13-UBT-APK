@@ -25,32 +25,55 @@ jobs:
           rm -rf www/.github www/assets www/www || true
 
       - name: Initialize and Build Android
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
+          # ၁။ ယခင် Android Folder ဟောင်းကို လုံးဝအမြစ်ပြတ်ဖျက်ခြင်း
           rm -rf android
+          
+          # ၂။ Capacitor စနစ်စတင်ခြင်း
           npx cap init ubt5 com.ubt5.app --web-dir www
           npx cap add android
           npx capacitor-assets generate --android --assetPath assets
 
+          # ၃။ Cleartext Traffic ခွင့်ပြုခြင်း
           sed -i 's/android:usesCleartextTraffic="false"/android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
           echo '{"appId": "com.ubt5.app", "appName": "ubt5", "webDir": "www", "server": {"allowNavigation": ["*"], "cleartext": true}}' > capacitor.config.json
 
           export JAVA_HOME=$JAVA_HOME_21_X64
           npx cap sync android
-          cd android && ./gradlew assembleRelease
+          
+          # ၄။ GitHub Secrets ထဲမှ Keystore ဖိုင်ကို ဆောက်ယူခြင်း
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/release.jks
 
-      # အမှားကင်းစင်သော တရားဝင် Google Play Sign အသုံးပြုသည့်စနစ်
-      - name: Sign Android APK with Release Key
-        uses: r0adkll/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDirectory: android/app/build/outputs/apk/release
-          signingKeyBase64: ${{ secrets.KEYSTORE_BASE64 }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEYSTORE_PASSWORD }} # အများအားဖြင့် Password နှစ်ခုက အတူတူပဲဖြစ်တတ်၍ KEYSTORE_PASSWORD ကို ပြန်သုံးထားပါသည်
+          # ၅။ Android Gradle ထဲသို့ Keystore စကားဝှက်များကို Native အတိုင်း တိုက်ရိုက်ထည့်သွင်းခြင်း
+          # ဤနည်းလမ်းသည် command ရိုက်ရန်မလိုဘဲ အလိုအလျောက် Signed APK ထွက်စေသည်
+          cat <<EOF >> android/app/build.gradle
+
+          android {
+              signingConfigs {
+                  release {
+                      storeFile file("release.jks")
+                      storePassword "$KEYSTORE_PASSWORD"
+                      keyAlias "$KEY_ALIAS"
+                      keyPassword "$KEYSTORE_PASSWORD"
+                  }
+              }
+              buildTypes {
+                  release {
+                      signingConfig signingConfigs.release
+                  }
+              }
+          }
+          EOF
+
+          # ၆။ တရားဝင် လက်မှတ်ထိုးပြီးသား Official Signed APK ကို တစ်ခါတည်း ဆောက်ယူခြင်း
+          cd android && ./gradlew assembleRelease
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: KEEC13-ubt5-Official-APK
-          path: ${{ steps.sign_app.outputs.signedReleaseFile }}
+          path: android/app/build/outputs/apk/release/app-release.apk
