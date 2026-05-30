@@ -26,16 +26,17 @@ jobs:
 
       - name: Initialize and Build Android
         run: |
-          # နေရာ (၁) - App ਨာမည် နှင့် Package ID အသစ် ပြောင်းခြင်း
-          npx cap init MyNewApp com.ubtnew.app --web-dir www
+          # index.html အသစ်များ အမြဲတမ်း APK ထဲ တန်းရောက်စေရန် Folder ဟောင်းကို ကြိုတင်ဖျက်ခြင်း
+          rm -rf android
+          
+          npx cap init ubt5 com.ubt5.app --web-dir www
           npx cap add android
           npx capacitor-assets generate --android --assetPath assets
 
           # Webview နှင့် Network Security ပြင်ဆင်ခြင်း
           sed -i 's/android:usesCleartextTraffic="false"/android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
           
-          # နေရာ (၂) - Config File ထဲတွင် နာမည်အသစ်များ ပြောင်းထည့်ခြင်း
-          echo '{"appId": "com.ubtnew.app", "appName": "MyNewApp", "webDir": "www", "server": {"allowNavigation": ["*"], "cleartext": true}}' > capacitor.config.json
+          echo '{"appId": "com.ubt5.app", "appName": "ubt5", "webDir": "www", "server": {"allowNavigation": ["*"], "cleartext": true}}' > capacitor.config.json
 
           export JAVA_HOME=$JAVA_HOME_21_X64
           npx cap sync android
@@ -54,21 +55,23 @@ jobs:
           
           BUILD_TOOLS_PATH=$(ls -d $ANDROID_HOME/build-tools/* | tail -1)
           
-          # 1. Zipalign လုပ်ခြင်း
-          $BUILD_TOOLS_PATH/zipalign -v 4 android/app/build/outputs/apk/release/app-release-unsigned.apk ubt5-aligned.apk
+          # Gradle က ထုတ်ပေးလိုက်သော မူရင်း APK ဖိုင်ကို ရှာဖွေခြင်း
+          ORIGINAL_APK=$(find android/app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
+          echo "Found APK to sign: $ORIGINAL_APK"
           
-          # 2. နေရာ (၃) - ထွက်လာမည့် ဖိုင်နာမည်ကို မိမိစိတ်ကြိုက် ပြောင်းလဲခြင်း
+          # 1. Zipalign လုပ်ခြင်း (ဖိုင်လမ်းကြောင်းကို စနစ်တကျ ညွှန်းဆိုထားသည်)
+          $BUILD_TOOLS_PATH/zipalign -v 4 "$ORIGINAL_APK" ubt5-aligned.apk
+          
+          # 2. ဆရာ့ရဲ့ Keystore ဖြင့် တရားဝင် လက်မှတ်ထိုးခြင်း
           $BUILD_TOOLS_PATH/apksigner sign --ks release.jks \
             --ks-pass pass:$KEYSTORE_PASSWORD \
             --ks-key-alias $KEY_ALIAS \
-            --out KEEC13-NewApp.apk ubt5-aligned.apk
+            --out KEEC13-ubt5-app.apk ubt5-aligned.apk
           
           echo "✅ Official Signed APK Created Successfully!"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          # နေရာ (၄) - Artifact ဇစ်ဖိုင် နာမည်ပြောင်းခြင်း
-          name: KEEC13-NewApp-Official-APK
-          # နေရာ (၅) - အပေါ်ကပေးခဲ့သော ဖိုင်နာမည်အတိအကျ ပြန်ထည့်ခြင်း
-          path: KEEC13-NewApp.apk
+          name: KEEC13-ubt5-Official-APK
+          path: KEEC13-ubt5-app.apk
