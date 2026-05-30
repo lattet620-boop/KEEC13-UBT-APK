@@ -59,14 +59,11 @@ jobs:
           ORIGINAL_APK=$(find android/app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
           echo "Found APK to sign: $ORIGINAL_APK"
           
-          # 1. Zipalign လုပ်ခြင်း (ဖိုင်လမ်းကြောင်းကို စနစ်တကျ ညွှန်းဆိုထားသည်)
+          # 1. Zipalign လုပ်ခြင်း
           $BUILD_TOOLS_PATH/zipalign -v 4 "$ORIGINAL_APK" ubt5-aligned.apk
           
-          # 2. ဆရာ့ရဲ့ Keystore ဖြင့် တရားဝင် လက်မှတ်ထိုးခြင်း
-          $BUILD_TOOLS_PATH/apksigner sign --ks release.jks \
-            --ks-pass pass:$KEYSTORE_PASSWORD \
-            --ks-key-alias $KEY_ALIAS \
-            --out KEEC13-ubt5-app.apk ubt5-aligned.apk
+          # 2. apksigner ကို အမှားအယွင်းမရှိစေရန် စာကြောင်းတစ်ကြောင်းတည်းဖြင့် လက်မှတ်ထိုးခြင်း
+          $BUILD_TOOLS_PATH/apksigner sign --ks release.jks --ks-pass pass:$KEYSTORE_PASSWORD --ks-key-alias $KEY_ALIAS --out KEEC13-ubt5-app.apk ubt5-aligned.apk
           
           echo "✅ Official Signed APK Created Successfully!"
 
