@@ -44,22 +44,30 @@ jobs:
           # Release Version အဖြစ် တည်ဆောက်ခြင်း
           cd android && ./gradlew assembleRelease
 
-      # အလိုအလျောက် Zipalign နှင့် apksigner ဗားရှင်းသစ်များကို အမှားကင်းစွာ လုပ်ဆောင်ပေးမည့် စနစ်
-      - name: Sign Android APK
-        uses: ilcifer/sign-android-release@v1
-        id: sign_app
-        with:
-          releaseDir: android/app/build/outputs/apk/release
-          signingKey: ${{ secrets.KEYSTORE_BASE64 }}
-          keyStorePassword: ${{ secrets.KEYSTORE_PASSWORD }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyPassword: ${{ secrets.KEYSTORE_PASSWORD }}
-
-      # ဒေါင်းလုဒ်ဆွဲမည့် ဖိုင်နာမည်ကို ဆရာ့စိတ်ကြိုက် ပြန်ပြောင်းလဲပေးခြင်း
-      - name: Rename Signed APK
+      - name: Sign Android APK with Release Key
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
         run: |
-          mv ${{ steps.sign_app.outputs.signedFile }} KEEC13-ubt5-app.apk
-          echo "✅ Official Signed APK Created and Renamed Successfully!"
+          # ၁။ GitHub Secrets ထဲမှ Keystore ဖိုင်ကို release.jks အဖြစ် ပြန်ထုတ်ယူခြင်း
+          echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
+          
+          # ၂။ Android Build Tools လမ်းကြောင်းကို အလိုအလျောက် ရှာဖွေခြင်း
+          BUILD_TOOLS_PATH=$(ls -d $ANDROID_HOME/build-tools/* | tail -1)
+          
+          # ၃။ Gradle တည်ဆောက်ပေးလိုက်သော မူရင်း APK ဖိုင်လမ်းကြောင်းကို ရှာဖွေခြင်း
+          ORIGINAL_APK=$(find android/app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
+          echo "Found APK to sign: $ORIGINAL_APK"
+          
+          # ၄။ Zipalign ပြုလုပ်ပြီး ထွက်လာမည့်ဖိုင်ကို KEEC13-ubt5-app.apk ဟု တစ်ခါတည်း အမည်ပေးခြင်း
+          $BUILD_TOOLS_PATH/zipalign -v 4 "$ORIGINAL_APK" KEEC13-ubt5-app.apk
+          
+          # ၅။ apksigner ဖြင့် အမှားအယွင်းမရှိစေရန် စာကြောင်းတစ်ကြောင်းတည်း သန့်သန့်ရှင်းရှင်း လက်မှတ်ထိုးခြင်း
+          # (မည်သည့် အပို Parameter စာသားမျှ မပါဝင်စေဘဲ ဖိုင်ကို တိုက်ရိုက် လက်မှတ်ထိုးခိုင်းလိုက်ပါသည်)
+          $BUILD_TOOLS_PATH/apksigner sign --ks release.jks --ks-pass pass:"$KEYSTORE_PASSWORD" --ks-key-alias "$KEY_ALIAS" KEEC13-ubt5-app.apk
+          
+          echo "✅ Official Signed APK Created Successfully!"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
