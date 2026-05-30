@@ -54,7 +54,7 @@ jobs:
           BUILD_TOOLS_PATH=$(ls -d $ANDROID_HOME/build-tools/* | tail -1)
           
           # 1. Zipalign လုပ်ခြင်း
-          $BUILD_TOOLS_PATH/zipalign -v 4 android/app/build/outputs/apk/release/app-release-unsigned.apk ubt5-aligned.apk
+          $BUILD_TOOLS_PATH/zipalign -v 4 android/app/build/outputs/apk/release/app-release-unsigned.apk KoreaMeaning-aligned.apk
           
           # 2. ဆရာ့ရဲ့ Keystore ဖြင့် တရားဝင် လက်မှတ်ထိုးခြင်း
           $BUILD_TOOLS_PATH/apksigner sign --ks release.jks \
