@@ -1,4 +1,4 @@
-name: HTML to APK (SDK 21 - Original Stable)
+name: HTML to APK (Final Success)
 on: [push]
 
 jobs:
@@ -16,61 +16,34 @@ jobs:
 
       - name: Prepare Folder and Install Tools
         run: |
-          npm install -g @ionic/cli @capacitor/assets
-          npm install @capacitor/core @capacitor/cli @capacitor/android
-          mkdir -p assets www
-          cp icon.png assets/icon.png || echo "icon.png not found"
-          cp splash.png assets/splash.png || echo "splash.png not found"
+          mkdir -p www
           cp -r ./* www/ || true
-          rm -rf www/.github www/assets www/www || true
+          rm -rf www/.github
+          npm install -g @ionic/cli
+          npm install @capacitor/core @capacitor/cli @capacitor/android
 
       - name: Initialize and Build Android
         run: |
-          # index.html အသစ်များ အမြဲတမ်း APK ထဲ တန်းရောက်စေရန် Folder ဟောင်းကို ကြိုတင်ဖျက်ခြင်း
-          rm -rf android
-          
-          npx cap init ubt5 com.ubt5.app --web-dir www
+          # Project ကို www directory နဲ့ စတင်ခြင်း
+          npx cap init MyApp com.kingeraser.myapp --web-dir www
           npx cap add android
-          npx capacitor-assets generate --android --assetPath assets
-
-          # Webview နှင့် Network Security ပြင်ဆင်ခြင်း
+          
+          # Webview Settings ပြင်ဆင်ခြင်း
           sed -i 's/android:usesCleartextTraffic="false"/android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
           
-          echo '{"appId": "com.ubt5.app", "appName": "ubt5", "webDir": "www", "server": {"allowNavigation": ["*"], "cleartext": true}}' > capacitor.config.json
+          # Local file access config ထည့်ခြင်း
+          echo '{"appId": "com.kingeraser.myapp", "appName": "MyApp", "webDir": "www", "server": {"allowNavigation": ["*"], "cleartext": true}}' > capacitor.config.json
 
           export JAVA_HOME=$JAVA_HOME_21_X64
           npx cap sync android
-          
-          # Release Version အဖြစ် တည်ဆောက်ခြင်း
-          cd android && ./gradlew assembleRelease
+          cd android && ./gradlew assembleDebug
 
-      - name: Sign Android APK with Release Key
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
-          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+      - name: Export APK
         run: |
-          # ၁။ GitHub Secrets ထဲမှ Keystore ဖိုင်ကို release.jks အဖြစ် ပြန်ထုတ်ယူခြင်း
-          echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
-          
-          # ၂။ Android Build Tools လမ်းကြောင်းကို အလိုအလျောက် ရှာဖွေခြင်း
-          BUILD_TOOLS_PATH=$(ls -d $ANDROID_HOME/build-tools/* | tail -1)
-          
-          # ၃။ Gradle တည်ဆောက်ပေးလိုက်သော မူရင်း APK ဖိုင်လမ်းကြောင်းကို ရှာဖွေခြင်း
-          ORIGINAL_APK=$(find android/app/build/outputs/apk/release/ -name "*.apk" | head -n 1)
-          echo "Found APK to sign: $ORIGINAL_APK"
-          
-          # ၄။ Zipalign ပြုလုပ်ပြီး ထွက်လာမည့်ဖိုင်ကို KEEC13-ubt5-app.apk ဟု တစ်ခါတည်း အမည်ပေးခြင်း
-          $BUILD_TOOLS_PATH/zipalign -v 4 "$ORIGINAL_APK" KEEC13-ubt5-app.apk
-          
-          # ၅။ apksigner ဖြင့် အမှားအယွင်းမရှိစေရန် စာကြောင်းတစ်ကြောင်းတည်း သန့်သန့်ရှင်းရှင်း လက်မှတ်ထိုးခြင်း
-          # (မည်သည့် အပို Parameter စာသားမျှ မပါဝင်စေဘဲ ဖိုင်ကို တိုက်ရိုက် လက်မှတ်ထိုးခိုင်းလိုက်ပါသည်)
-          $BUILD_TOOLS_PATH/apksigner sign --ks release.jks --ks-pass pass:"$KEYSTORE_PASSWORD" --ks-key-alias "$KEY_ALIAS" KEEC13-ubt5-app.apk
-          
-          echo "✅ Official Signed APK Created Successfully!"
+          cp android/app/build/outputs/apk/debug/app-debug.apk ./my-final-app.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: KEEC13-ubt5-Official-APK
-          path: KEEC13-ubt5-app.apk
+          name: My-HTML-App-APK
+          path: my-final-app.apk
