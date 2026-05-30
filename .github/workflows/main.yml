@@ -60,7 +60,7 @@ jobs:
           $BUILD_TOOLS_PATH/apksigner sign --ks release.jks \
             --ks-pass pass:$KEYSTORE_PASSWORD \
             --ks-key-alias $KEY_ALIAS \
-            --out KEEC13-ubt5-app.apk ubt5-aligned.apk
+            --out KEEC13-km-app.apk km-aligned.apk
           
           echo "✅ Official Signed APK Created Successfully!"
 
