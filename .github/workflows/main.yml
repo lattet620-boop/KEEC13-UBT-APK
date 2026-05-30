@@ -27,14 +27,14 @@ jobs:
       - name: Initialize and Build Android
         run: |
           # SDK Version များကို Capacitor ၏ Default (SDK 21) အတိုင်းထားရှိသည်
-          npx cap init KoreaMeaning com.KM.app --web-dir www
+          npx cap init km com.km.app --web-dir www
           npx cap add android
           npx capacitor-assets generate --android --assetPath assets
 
           # Webview နှင့် Network Security ပြင်ဆင်ခြင်း
           sed -i 's/android:usesCleartextTraffic="false"/android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
           
-          echo '{"appId": "com.KM.app", "appName": "KoreaMeaning", "webDir": "www", "server": {"allowNavigation": ["*"], "cleartext": true}}' > capacitor.config.json
+          echo '{"appId": "com.km.app", "appName": "km", "webDir": "www", "server": {"allowNavigation": ["*"], "cleartext": true}}' > capacitor.config.json
 
           export JAVA_HOME=$JAVA_HOME_21_X64
           npx cap sync android
@@ -54,18 +54,18 @@ jobs:
           BUILD_TOOLS_PATH=$(ls -d $ANDROID_HOME/build-tools/* | tail -1)
           
           # 1. Zipalign လုပ်ခြင်း
-          $BUILD_TOOLS_PATH/zipalign -v 4 android/app/build/outputs/apk/release/app-release-unsigned.apk KoreaMeaning-aligned.apk
+          $BUILD_TOOLS_PATH/zipalign -v 4 android/app/build/outputs/apk/release/app-release-unsigned.apk km-aligned.apk
           
           # 2. ဆရာ့ရဲ့ Keystore ဖြင့် တရားဝင် လက်မှတ်ထိုးခြင်း
           $BUILD_TOOLS_PATH/apksigner sign --ks release.jks \
             --ks-pass pass:$KEYSTORE_PASSWORD \
             --ks-key-alias $KEY_ALIAS \
-            --out KEEC13-KM-app.apk KoreaMeaning-aligned.apk
+            --out KEEC13-ubt5-app.apk ubt5-aligned.apk
           
           echo "✅ Official Signed APK Created Successfully!"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: KEEC13-Korea-Meaning-Official-APK
-          path: KEEC13-KM-app.apk
+          name: KEEC13-km-Official-APK
+          path: KEEC13-km-app.apk
