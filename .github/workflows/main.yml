@@ -60,13 +60,11 @@ jobs:
           echo "Found APK to sign: $ORIGINAL_APK"
           
           # 1. Zipalign လုပ်ခြင်း
-          $BUILD_TOOLS_PATH/zipalign -v 4 "$ORIGINAL_APK" ubt5-aligned.apk
+          $BUILD_TOOLS_PATH/zipalign -v 4 "$ORIGINAL_APK" KEEC13-ubt5-app.apk
           
-          # 2. apksigner စနစ်သစ်၏ Command အစီအစဉ်အမှန် (Input ဖိုင်ကို အလယ်တွင်ထားပြီး ထွက်လာမည့်ဖိုင်ကို --out ဖြင့် အနောက်ဆုံးတွင် ထားရှိသည်)
-          $BUILD_TOOLS_PATH/apksigner sign --ks release.jks --ks-pass pass:$KEYSTORE_PASSWORD --ks-key-alias $KEY_ALIAS ubt5-aligned.apk
-          
-          # 3. လက်မှတ်ထိုးပြီးသားဖိုင်ကို ဆရာအသုံးပြုနေကျ နာမည်အတိုင်း ပြန်လည်ပြောင်းလဲပေးခြင်း
-          mv ubt5-aligned.apk KEEC13-ubt5-app.apk
+          # 2. apksigner ဖြင့် အမှားအယွင်းမရှိ လက်မှတ်ထိုးခြင်း 
+          # (Zipalign လုပ်ပြီးသား ဖိုင်ကို တိုက်ရိုက် Sign လုပ်ခိုင်းလိုက်ခြင်း ဖြစ်ပါသည်)
+          $BUILD_TOOLS_PATH/apksigner sign --ks release.jks --ks-pass pass:$KEYSTORE_PASSWORD --ks-key-alias $KEY_ALIAS KEEC13-ubt5-app.apk
           
           echo "✅ Official Signed APK Created Successfully!"
 
