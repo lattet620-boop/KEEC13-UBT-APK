@@ -27,7 +27,7 @@ jobs:
       - name: Initialize and Build Android
         run: |
           # နေရာ (၁) - App ਨာမည် နှင့် Package ID အသစ် ပြောင်းခြင်း
-          npx cap init koream com.korea.app --web-dir www
+          npx cap init MyNewApp com.ubtnew.app --web-dir www
           npx cap add android
           npx capacitor-assets generate --android --assetPath assets
 
@@ -35,7 +35,7 @@ jobs:
           sed -i 's/android:usesCleartextTraffic="false"/android:usesCleartextTraffic="true"/' android/app/src/main/AndroidManifest.xml
           
           # နေရာ (၂) - Config File ထဲတွင် နာမည်အသစ်များ ပြောင်းထည့်ခြင်း
-          echo '{"appId": "com.korea.app", "appName": "koream", "webDir": "www", "server": {"allowNavigation": ["*"], "cleartext": true}}' > capacitor.config.json
+          echo '{"appId": "com.ubtnew.app", "appName": "MyNewApp", "webDir": "www", "server": {"allowNavigation": ["*"], "cleartext": true}}' > capacitor.config.json
 
           export JAVA_HOME=$JAVA_HOME_21_X64
           npx cap sync android
@@ -61,7 +61,7 @@ jobs:
           $BUILD_TOOLS_PATH/apksigner sign --ks release.jks \
             --ks-pass pass:$KEYSTORE_PASSWORD \
             --ks-key-alias $KEY_ALIAS \
-            --out KEEC13-koream.apk koream-aligned.apk
+            --out KEEC13-NewApp.apk ubt5-aligned.apk
           
           echo "✅ Official Signed APK Created Successfully!"
 
@@ -71,4 +71,4 @@ jobs:
           # နေရာ (၄) - Artifact ဇစ်ဖိုင် နာမည်ပြောင်းခြင်း
           name: KEEC13-NewApp-Official-APK
           # နေရာ (၅) - အပေါ်ကပေးခဲ့သော ဖိုင်နာမည်အတိအကျ ပြန်ထည့်ခြင်း
-          path: KEEC13-koream.apk
+          path: KEEC13-NewApp.apk
